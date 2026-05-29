@@ -6,6 +6,7 @@ from javascript import require
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.prompts import SystemMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from voyager.utils.llm_logger import LLMLoggerMixin
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
@@ -13,7 +14,7 @@ from voyager.prompts import load_prompt
 from voyager.control_primitives_context import load_control_primitives_context
 
 
-class ActionAgent:
+class ActionAgent(LLMLoggerMixin):
     def __init__(
         self,
         model_name="gpt-3.5-turbo",

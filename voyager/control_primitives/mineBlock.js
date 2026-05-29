@@ -10,11 +10,30 @@ async function mineBlock(bot, name, count = 1) {
     if (!blockByName) {
         throw new Error(`No block named ${name}`);
     }
-    const blocks = bot.findBlocks({
+    const oreTypes = [
+        "coal_ore","iron_ore","gold_ore","diamond_ore","emerald_ore",
+        "lapis_ore","redstone_ore","copper_ore","nether_gold_ore",
+        "nether_quartz_ore","ancient_debris","deepslate_coal_ore",
+        "deepslate_iron_ore","deepslate_gold_ore","deepslate_diamond_ore",
+        "deepslate_emerald_ore","deepslate_lapis_ore","deepslate_redstone_ore",
+        "deepslate_copper_ore",
+    ];
+    const isOre = oreTypes.includes(name);
+
+    function isExposed(pos) {
+        const offsets = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+        return offsets.some(([dx,dy,dz]) => {
+            const b = bot.blockAt(pos.offset(dx,dy,dz));
+            return !b || b.name === "air" || b.name === "cave_air" || b.boundingBox === "empty";
+        });
+    }
+
+    let rawBlocks = bot.findBlocks({
         matching: [blockByName.id],
         maxDistance: 32,
         count: 1024,
     });
+    const blocks = isOre ? rawBlocks.filter(isExposed) : rawBlocks;
     if (blocks.length === 0) {
         bot.chat(`No ${name} nearby, please explore first`);
         _mineBlockFailCount++;

@@ -8,13 +8,14 @@ from voyager.prompts import load_prompt
 from voyager.utils.json_utils import fix_and_parse_json
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.embeddings.huggingface import HuggingFaceEmbeddings
+from voyager.utils.llm_logger import LLMLoggerMixin
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.vectorstores import Chroma
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
-class CurriculumAgent:
+class CurriculumAgent(LLMLoggerMixin):
     def __init__(
         self,
         model_name="gpt-3.5-turbo",
@@ -296,6 +297,7 @@ class CurriculumAgent:
             raise RuntimeError("Max retries reached, failed to propose ai task.")
         curriculum = self.llm(messages).content
         print(f"\033[31m****Curriculum Agent ai message****\n{curriculum}\033[0m")
+        self._log_llm_exchange("curriculum", messages, curriculum)
         try:
             response = self.parse_ai_message(curriculum)
             assert "next_task" in response

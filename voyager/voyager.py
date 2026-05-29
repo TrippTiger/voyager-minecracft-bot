@@ -3,6 +3,7 @@ import json
 import os
 import time
 from typing import Dict
+from datetime import datetime
 
 import voyager.utils as U
 from .env import VoyagerEnv
@@ -11,6 +12,7 @@ from .agents import ActionAgent
 from .agents import CriticAgent
 from .agents import CurriculumAgent
 from .agents import SkillManager
+from .utils.llm_logger import init_logger
 
 
 # TODO: remove event memory
@@ -154,6 +156,7 @@ class Voyager:
         self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
         self.resume = resume
         self.spawn_position = spawn_position
+        init_logger(log_dir=os.path.join(ckpt_dir, "experiment_logs"))
 
         # init variables for rollout
         self.action_agent_rollout_num_iter = -1
@@ -208,6 +211,7 @@ class Voyager:
             raise ValueError("Agent must be reset before stepping")
         ai_message = self.action_agent.llm(self.messages)
         print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
+        self._log_llm_exchange("action", self.messages, ai_message.content)
         self.conversations.append(
             (self.messages[0].content, self.messages[1].content, ai_message.content)
         )

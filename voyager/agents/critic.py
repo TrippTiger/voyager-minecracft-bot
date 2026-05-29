@@ -2,11 +2,12 @@ from voyager.prompts import load_prompt
 from voyager.utils.json_utils import fix_and_parse_json
 from langchain.chat_models.openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
+from voyager.utils.llm_logger import LLMLoggerMixin
 
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
-class CriticAgent:
+class CriticAgent(LLMLoggerMixin):
     def __init__(
         self,
         model_name="gpt-3.5-turbo",
@@ -102,6 +103,7 @@ class CriticAgent:
 
         critic = self.llm(messages).content
         print(f"\033[31m****Critic Agent ai message****\n{critic}\033[0m")
+        self._log_llm_exchange("critic", messages, critic)
         try:
             response = fix_and_parse_json(critic)
             assert response["success"] in [True, False]

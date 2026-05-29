@@ -1,4 +1,6 @@
 ckpt*
+start_voyager.py
+.venv/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

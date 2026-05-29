@@ -20,7 +20,8 @@ class Voyager:
         mc_port: int = None,
         azure_login: Dict[str, str] = None,
         server_port: int = 3000,
-        openai_api_key: str = None,
+        openrouter_api_key: str = None,
+        spawn_position: Dict[str, float] = None,
         env_wait_ticks: int = 20,
         env_request_timeout: int = 600,
         max_iterations: int = 160,
@@ -58,7 +59,7 @@ class Voyager:
         :param mc_port: minecraft in-game port
         :param azure_login: minecraft login config
         :param server_port: mineflayer port
-        :param openai_api_key: openai api key
+        :param openrouter_api_key: openrouter api key
         :param env_wait_ticks: how many ticks at the end each step will wait, if you found some chat log missing,
         you should increase this value
         :param env_request_timeout: how many seconds to wait for each step, if the code execution exceeds this time,
@@ -95,7 +96,7 @@ class Voyager:
         :param skill_manager_model_name: skill manager model name
         :param skill_manager_temperature: skill manager temperature
         :param skill_manager_retrieval_top_k: how many skills to retrieve for each task
-        :param openai_api_request_timeout: how many seconds to wait for openai api
+        :param openai_api_request_timeout: how many seconds to wait for openrouter api
         :param ckpt_dir: checkpoint dir
         :param skill_library_dir: skill library dir
         :param resume: whether to resume from checkpoint
@@ -111,8 +112,7 @@ class Voyager:
         self.reset_placed_if_failed = reset_placed_if_failed
         self.max_iterations = max_iterations
 
-        # set openai api key
-        os.environ["OPENAI_API_KEY"] = openai_api_key
+        os.environ["OPENAI_API_KEY"] = openrouter_api_key
 
         # init agents
         self.action_agent = ActionAgent(
@@ -153,6 +153,7 @@ class Voyager:
         )
         self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
         self.resume = resume
+        self.spawn_position = spawn_position
 
         # init variables for rollout
         self.action_agent_rollout_num_iter = -1
@@ -179,7 +180,9 @@ class Voyager:
         # step to peek an observation
         events = self.env.step(
             "bot.chat(`/time set ${getNextTime()}`);\n"
-            + f"bot.chat('/difficulty {difficulty}');"
+            + f"bot.chat('/difficulty {difficulty}');\n"
+            + "bot.chat('/gamerule fallDamage false');\n"
+            + "bot.chat('/gamerule keepInventory true');"
         )
         skills = self.skill_manager.retrieve_skills(query=self.context)
         print(
@@ -307,6 +310,7 @@ class Voyager:
                 options={
                     "mode": "hard",
                     "wait_ticks": self.env_wait_ticks,
+                    "position": self.spawn_position,
                 }
             )
             self.resume = True
@@ -331,6 +335,14 @@ class Voyager:
                     reset_env=reset_env,
                 )
             except Exception as e:
+                if "429" in str(e) or "rate" in str(e).lower():
+                    import re as _re
+                    _m = _re.search(r"retry_after_seconds.*?(\d+)", str(e))
+                    wait = int(_m.group(1)) + 5 if _m else 35
+                    print(f"\033[41mRate limited. Waiting {wait}s before retry...\033[0m")
+                    time.sleep(wait)
+                    reset_env = False
+                    continue
                 time.sleep(3)  # wait for mineflayer to exit
                 info = {
                     "task": task,
@@ -343,7 +355,7 @@ class Voyager:
                         "wait_ticks": self.env_wait_ticks,
                         "inventory": self.last_events[-1][1]["inventory"],
                         "equipment": self.last_events[-1][1]["status"]["equipment"],
-                        "position": self.last_events[-1][1]["status"]["position"],
+                        "position": self.spawn_position or self.last_events[-1][1]["status"]["position"],
                     }
                 )
                 # use red color background to print the error

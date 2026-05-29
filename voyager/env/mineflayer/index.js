@@ -51,9 +51,15 @@ app.post("/start", (req, res) => {
 
     bot.once("spawn", async () => {
         bot.removeListener("error", onConnectionFailed);
+        bot.chat("/gamerule fallDamage false");
         let itemTicks = 1;
         if (req.body.reset === "hard") {
             bot.chat("/clear @s");
+            if (req.body.position) {
+                bot.once("respawn", () => {
+                    bot.chat(`/tp @s ${req.body.position.x} ${req.body.position.y} ${req.body.position.z}`);
+                });
+            }
             bot.chat("/kill @s");
             const inventory = req.body.inventory ? req.body.inventory : {};
             const equipment = req.body.equipment
@@ -99,7 +105,7 @@ app.post("/start", (req, res) => {
         const tool = require("mineflayer-tool").plugin;
         const collectBlock = require("mineflayer-collectblock").plugin;
         const pvp = require("mineflayer-pvp").plugin;
-        const minecraftHawkEye = require("minecrafthawkeye");
+        const minecraftHawkEye = require("minecrafthawkeye").default || require("minecrafthawkeye");
         bot.loadPlugin(pathfinder);
         bot.loadPlugin(tool);
         bot.loadPlugin(collectBlock);

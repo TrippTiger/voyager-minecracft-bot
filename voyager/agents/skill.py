@@ -1,10 +1,12 @@
 import os
 
 import voyager.utils as U
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chat_models.openai import ChatOpenAI
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.vectorstores import Chroma
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 from voyager.prompts import load_prompt
 from voyager.control_primitives import load_control_primitives
@@ -39,7 +41,7 @@ class SkillManager:
         self.ckpt_dir = ckpt_dir
         self.vectordb = Chroma(
             collection_name="skill_vectordb",
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=HuggingFaceEmbeddings(),
             persist_directory=f"{ckpt_dir}/skill/vectordb",
         )
         assert self.vectordb._collection.count() == len(self.skills), (

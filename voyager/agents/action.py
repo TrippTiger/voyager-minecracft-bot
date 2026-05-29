@@ -3,9 +3,11 @@ import time
 
 import voyager.utils as U
 from javascript import require
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.openai import ChatOpenAI
 from langchain.prompts import SystemMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 from voyager.prompts import load_prompt
 from voyager.control_primitives_context import load_control_primitives_context

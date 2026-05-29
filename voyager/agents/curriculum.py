@@ -6,10 +6,12 @@ import re
 import voyager.utils as U
 from voyager.prompts import load_prompt
 from voyager.utils.json_utils import fix_and_parse_json
-from langchain.chat_models import ChatOpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.chat_models.openai import ChatOpenAI
+from langchain.embeddings.huggingface import HuggingFaceEmbeddings
 from langchain.schema import HumanMessage, SystemMessage
 from langchain.vectorstores import Chroma
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 class CurriculumAgent:
@@ -57,7 +59,7 @@ class CurriculumAgent:
         # vectordb for qa cache
         self.qa_cache_questions_vectordb = Chroma(
             collection_name="qa_cache_questions_vectordb",
-            embedding_function=OpenAIEmbeddings(),
+            embedding_function=HuggingFaceEmbeddings(),
             persist_directory=f"{ckpt_dir}/curriculum/vectordb",
         )
         assert self.qa_cache_questions_vectordb._collection.count() == len(

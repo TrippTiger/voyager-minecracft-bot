@@ -1,7 +1,9 @@
 from voyager.prompts import load_prompt
 from voyager.utils.json_utils import fix_and_parse_json
-from langchain.chat_models import ChatOpenAI
+from langchain.chat_models.openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
+
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 
 class CriticAgent:
